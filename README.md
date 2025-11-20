@@ -15,7 +15,7 @@ Like `juicer`, but without all those calories
 1. Clone workflow into working directory:
 
     ```bash
-    git clone https://github.com/EricSDavis/dietJuicer.git .
+    git clone https://github.com/PhanstielLab/dietJuicer.git .
     ```
 
 2. Edit the tab-separated `samplesheet.txt` file with the names of `Read1` and `Read2` gzipped fastq files and the path to these files under the `Sequencing_Directory` column. No naming convention is needed for fastq files, as long as they are gzipped. At minimum one additional column is required to determine which combination of files to combine into a group (see step 3). Optional columns can be specified below to capture sample metadata, as shown below:
@@ -125,7 +125,7 @@ A Hi-C map can be created by running `dietJuicerCore` (see "Quickstart") or by c
 1. Clone workflow into working directory:
 
     ```bash
-    git clone https://github.com/EricSDavis/dietJuicer.git .
+    git clone https://github.com/PhanstielLab/dietJuicer.git .
     ```
 
 2. Edit the tab-separated `samplesheet.txt` file with the paths to `merged_nodups`, `inter`, and `inter30` text files. Just like `dietJuicerCore` a minimum of one additional column is required to determine which combination of files to combine into a group (see step 3). Optional columns can be specified below to capture sample metadata, as shown below:
