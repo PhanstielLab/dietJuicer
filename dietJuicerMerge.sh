@@ -7,21 +7,22 @@
 #SBATCH -p general
 #SBATCH --mem=2gb
 #SBATCH -o "%x-%j.out"
+#SBATCH --mail-type=END,FAIL,TIME_LIMIT_80
 
 ## Exit if any command fails
 set -e
 
 ## Load required modules
-module load python/3.6.6
+module load python/3.12.4
 
 ## Create and activate virtual environment with requirements
-python3 -m venv env && source env/bin/activate && pip3 install -r config/requirements.txt && pip3 install pandas
+python3 -m venv env && source env/bin/activate && pip3 install -r config/requirements.txt && pip3 install pandas && pip install snakemake-executor-plugin-slurm
 
 ## Make directory for slurm logs
 mkdir -p output/logs_slurm
 
 ## Execute buildHIC snakemake workflow
-snakemake -j 100 --rerun-incomplete --restart-times 3 -p -s workflows/buildHIC --latency-wait 500 --cluster-config "config/cluster.yaml" --cluster "sbatch -J {cluster.name} -p {cluster.partition} -t {cluster.time} -c {cluster.cpusPerTask} --mem-per-cpu={cluster.memPerCpu} -N {cluster.nodes} --output {cluster.output} --error {cluster.error} --parsable" --cluster-status ./scripts/status.py
+snakemake -j 100 --rerun-incomplete --restart-times 3 -p -s workflows/buildHIC --latency-wait 500 --configfile "config/cluster.yaml" --profile profiles/slurm
 
 ## Success message
 echo "Entire workflow completed successfully!"
