@@ -3,11 +3,24 @@ jobs: 100
 latency-wait: 500
 
 default-resources:
-#  name: "'{rule},{wildcards}'" # -J
-  slurm_partition: general # -p
-  runtime: 8640 # -t
-  cpus_per_task: 1 # -c
-  mem_mb_per_cpu: 64G # --mem-per-cpu
+  slurm_partition: general
+  runtime: 8640
+  cpus_per_task: 1
+  mem_mb_per_cpu: 4G  # Changed from 64G to 4G for default
   nodes: 1
   output: "'output/logs_slurm/{rule}.{wildcards}.{jobid}.out'"
   error: "'output/logs_slurm/{rule}.{wildcards}.{jobid}.err'"
+
+set-resources:
+  hic:
+    mem_mb_per_cpu: 260G
+    runtime: 10080
+  hic30:
+    mem_mb_per_cpu: 260G
+    runtime: 10080
+  norm:
+    mem_mb_per_cpu: 260G
+    runtime: 10080
+  norm30:
+    mem_mb_per_cpu: 260G
+    runtime: 10080
