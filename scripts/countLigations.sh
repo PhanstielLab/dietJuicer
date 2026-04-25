@@ -26,13 +26,20 @@
 # Small helper script to count reads with ligation junction
 # Juicer version 1.5
 
-gunzip -c $R1 | grep -n $ligation | cut -f1 -d : > $temp;
-gunzip -c $R2 | grep -n $ligation | cut -f1 -d : >> $temp;
-num1=$(sort $temp | uniq | wc -l | awk '{{print $1}}');
-num2=$(gunzip -c $R1 | wc -l | awk '{{print $1}}');
+export LC_ALL=C
+export LC_COLLATE=C
 
-echo -ne "$num1 " > $res;
-echo "$num2" > $linecount;
+if [ "$ligation" = "XXXX" ]
+then
+    num1="0"
+else
+    num1=$(paste <(gunzip -c $R1) <(gunzip -c $R2) | awk '!((NR+2)%4)' | grep -cE $ligation)
+fi
+
+num2=$(gunzip -c $R1 | wc -l | awk '{print $1}')
+
+echo -ne "$num1 " > $res
+echo "$num2" > $linecount
 
 # num1=$(paste <(gunzip -c $R1) <(gunzip -c $R2) | grep -cE $ligation)
 # num2=$(gunzip -c $R1 | wc -l | awk '{{print $1}}')

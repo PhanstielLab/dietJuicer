@@ -75,7 +75,6 @@ rule countLigations:
         R1 = lambda wildcards: ['output/{group}/splitsR1/{splitName}_R1.fastq.gz'.format(group=wildcards.group, splitName=wildcards.splitName)],
         R2 = lambda wildcards: ['output/{group}/splitsR2/{splitName}_R2.fastq.gz'.format(group=wildcards.group, splitName=wildcards.splitName)]
     output:
-        temp = temp('output/{group}/{group}_countLigations_split{splitName}_temp'),
         res = temp('output/{group}/{group}_countLigations_split{splitName}_norm.txt.res.txt'),
         linecount = temp('output/{group}/{group}_countLigations_split{splitName}_linecount.txt')
     log:
@@ -87,7 +86,7 @@ rule countLigations:
     benchmark: 
         'output/{group}/benchmarks/{group}_countLigations_split{splitName}.tsv'
     shell:
-        "R1={input.R1} R2={input.R2} ligation={params.ligation} temp={output.temp} res={output.res} linecount={output.linecount} sh scripts/countLigations.sh 2> {log.err} 1> {log.out}"
+        "R1={input.R1} R2={input.R2} ligation={params.ligation} res={output.res} linecount={output.linecount} sh scripts/countLigations.sh 2> {log.err} 1> {log.out}"
 
 rule align:
     input:
@@ -113,29 +112,22 @@ rule chimera:
     input:
         sam = rules.align.output.sam
     output:
-        norm = temp("output/{group}/{group}_align_split{splitName}_norm.txt"),
-        normRes = temp("output/{group}/{group}_align_split{splitName}_norm.txt.res.txt"),
-        alignable = temp("output/{group}/{group}_align_split{splitName}_alignable.sam"),
-        collisions = temp("output/{group}/{group}_align_split{splitName}_collisions.sam"),
-        lowqcollisions = temp("output/{group}/{group}_align_split{splitName}_collisions_low_mapq.sam"),
-        unmapped = temp("output/{group}/{group}_align_split{splitName}_unmapped.sam"),
-        mapq0 = temp("output/{group}/{group}_align_split{splitName}_mapq0.sam"),
-        unpaired = temp("output/{group}/{group}_align_split{splitName}_unpaired.sam"),
-        done = temp("output/{group}/{group}_chimera_split{splitName}_done.txt")
+        sam = temp("output/{group}/{group}_chimera_split{splitName}.sam")
     log:
         err = "output/{group}/logs/{group}_chimera_split{splitName}.err",
         out = "output/{group}/logs/{group}_chimera_split{splitName}.out"
-    threads: 1
     params:
-        fname = 'output/{group}/{group}_align_split{splitName}',
-        mapq0_reads_included = config['mapq0_reads_included']
-    benchmark: 
+        stem = "output/{group}/{group}_align_split{splitName}_norm",
+        site_file = config['site_file']
+    threads: 1
+    benchmark:
         'output/{group}/benchmarks/{group}_chimera_split{splitName}.tsv'
     shell:
         """
-        touch {output.norm} {output.normRes} {output.alignable} {output.collisions} {output.lowqcollisions} {output.unmapped} {output.mapq0} {output.unpaired}
-        gawk -v "fname"={params.fname} -v "mapq0_reads_included"={params.mapq0_reads_included} -f ./scripts/chimeric_blacklist.awk {input.sam} 2> {log.err} 1> {log.out} && \
-        touch {output.done}
+        awk -v stem={params.stem} -v site_file={params.site_file} -f ./scripts/chimeric_sam.awk {input.sam} > {output.sam}.tmp 2> {log.err}
+        awk -v avgInsertFile={params.stem}.txt.res.txt -f ./scripts/adjust_insert_size.awk {output.sam}.tmp > {output.sam}.tmp2 2>> {log.err}
+        samtools sort -t cb -n -O SAM -l 0 -m 2G {output.sam}.tmp2 > {output.sam} 2>> {log.err}
+        rm {output.sam}.tmp {output.sam}.tmp2
         """
 
 rule fragment:
