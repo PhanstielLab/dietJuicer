@@ -112,29 +112,22 @@ rule chimera:
     input:
         sam = rules.align.output.sam
     output:
-        norm = temp("output/{group}/{group}_align_split{splitName}_norm.txt"),
-        normRes = temp("output/{group}/{group}_align_split{splitName}_norm.txt.res.txt"),
-        alignable = temp("output/{group}/{group}_align_split{splitName}_alignable.sam"),
-        collisions = temp("output/{group}/{group}_align_split{splitName}_collisions.sam"),
-        lowqcollisions = temp("output/{group}/{group}_align_split{splitName}_collisions_low_mapq.sam"),
-        unmapped = temp("output/{group}/{group}_align_split{splitName}_unmapped.sam"),
-        mapq0 = temp("output/{group}/{group}_align_split{splitName}_mapq0.sam"),
-        unpaired = temp("output/{group}/{group}_align_split{splitName}_unpaired.sam"),
-        done = temp("output/{group}/{group}_chimera_split{splitName}_done.txt")
+        sam = temp("output/{group}/{group}_chimera_split{splitName}.sam")
     log:
         err = "output/{group}/logs/{group}_chimera_split{splitName}.err",
         out = "output/{group}/logs/{group}_chimera_split{splitName}.out"
-    threads: 1
     params:
-        fname = 'output/{group}/{group}_align_split{splitName}',
-        mapq0_reads_included = config['mapq0_reads_included']
-    benchmark: 
+        stem = "output/{group}/{group}_align_split{splitName}_norm",
+        site_file = config['site_file']
+    threads: 1
+    benchmark:
         'output/{group}/benchmarks/{group}_chimera_split{splitName}.tsv'
     shell:
         """
-        touch {output.norm} {output.normRes} {output.alignable} {output.collisions} {output.lowqcollisions} {output.unmapped} {output.mapq0} {output.unpaired}
-        gawk -v "fname"={params.fname} -v "mapq0_reads_included"={params.mapq0_reads_included} -f ./scripts/chimeric_blacklist.awk {input.sam} 2> {log.err} 1> {log.out} && \
-        touch {output.done}
+        awk -v stem={params.stem} -v site_file={params.site_file} -f ./scripts/chimeric_sam.awk {input.sam} > {output.sam}.tmp 2> {log.err}
+        awk -v avgInsertFile={params.stem}.txt.res.txt -f ./scripts/adjust_insert_size.awk {output.sam}.tmp > {output.sam}.tmp2 2>> {log.err}
+        samtools sort -t cb -n -O SAM -l 0 -m 2G {output.sam}.tmp2 > {output.sam} 2>> {log.err}
+        rm {output.sam}.tmp {output.sam}.tmp2
         """
 
 rule fragment:
